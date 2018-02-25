@@ -15,7 +15,7 @@ class DiceDataset(Dataset):
     """ Dice Dataset """
 
     def __init__(self, dice_dir, train, class_max=200, train_percent=0.75, equal_datasets=False, transform=None):       
-        d = list(DiceImageDataset(dice_dir))
+        d = list(DiceImageDataset(dice_dir, class_max))
         random.shuffle(d)
         self.dice_imgs = list()
         if train:
@@ -38,7 +38,7 @@ class DiceDataset(Dataset):
         return torch.from_numpy(image).float(), label - 1, filename
 
 if __name__ == "__main__":
-    d = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", train=False)
+    d = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", True, 20)
 
     print "Len set: ", len(d)
     p = DataLoader(d, batch_size=4, num_workers=2, shuffle=True)

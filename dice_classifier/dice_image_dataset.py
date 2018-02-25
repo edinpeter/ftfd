@@ -8,14 +8,15 @@ import matplotlib.pyplot as plt
 class DiceImageDataset(Dataset):
     """ Dice Dataset """
 
-    def __init__(self, image_dir, transform=None):       
+    def __init__(self, image_dir, class_max=100, transform=None):       
         self.image_dir = image_dir
 
         self.dice_imgs = list()
         dice_imgs_temp = list()
-        for i in range(1, 7):
-            self.dice_imgs.append(filter((lambda s: (str(i) + '_image') in s) , os.listdir(image_dir)))
-            for img in self.dice_imgs[i-1]:
+        for i in range(0, 6):
+            self.dice_imgs.append(filter((lambda s: (str(i+1) + '_image') in s) , os.listdir(image_dir)))
+            self.dice_imgs[i] = self.dice_imgs[i][0:min(class_max, len(self.dice_imgs[i]))]
+            for img in self.dice_imgs[i]:
                 dice_imgs_temp.append(img)
         self.dice_imgs = dice_imgs_temp
 

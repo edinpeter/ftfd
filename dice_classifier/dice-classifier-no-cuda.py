@@ -25,7 +25,7 @@ import torch.nn.functional as F
 
 class Net(nn.Module):
     def __init__(self):
-    	self.network_width = 10
+        self.network_width = 10
         self.mystery_1 = 18
         self.mystery_2 = 20
         self.mystery_3 = 20
@@ -47,14 +47,14 @@ class Net(nn.Module):
         return x
 
 
-net = Net().cuda()
+net = Net()
 
 import torch.optim as optim
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-for epoch in range(20):  # loop over the dataset multiple times
+for epoch in range(10):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
@@ -63,7 +63,7 @@ for epoch in range(20):  # loop over the dataset multiple times
 
         # wrap them in Variable
         #print (inputs[0])
-        inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
+        inputs, labels = Variable(inputs), Variable(labels)
 
         # zero the parameter gradients
         optimizer.zero_grad()
@@ -88,7 +88,7 @@ images, labels, filenames = dataiter.next()
 
 print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
-outputs = net(Variable(images.cuda()))
+outputs = net(Variable(images))
 
 _, predicted = torch.max(outputs.data, 1)
 
@@ -100,10 +100,10 @@ total = 0
 
 for data in testloader:
     images, labels, filenames = data
-    outputs = net(Variable(images.cuda()))
+    outputs = net(Variable(images))
     _, predicted = torch.max(outputs.data, 1)
     total += labels.size(0)
-    correct += (predicted == labels.cuda()).sum()
+    correct += (predicted == labels).sum()
 
 print('Accuracy of the network on the %i test images: %d %%' %  (len(testset), (
     100 * correct / total)))
@@ -112,9 +112,9 @@ class_correct = list(0. for i in range(6))
 class_total = list(0. for i in range(6))
 for data in testloader:
     images, labels, filenames = data
-    outputs = net(Variable(images.cuda()))
+    outputs = net(Variable(images))
     _, predicted = torch.max(outputs.data, 1)
-    c = (predicted == labels.cuda()).squeeze()
+    c = (predicted == labels).squeeze()
 
     for i in range(len(labels)):
         label = labels[i]
