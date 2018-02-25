@@ -28,13 +28,16 @@ def color1(image):
 
 def blur(image):
 	modes = ['reflect', 'constant', 'nearest', 'mirror', 'wrap']
-	#mode=modes[random.randint(0, len(modes) - 1)]
+	mode=modes[random.randint(0, len(modes) - 1)]
 	image2 = filters.gaussian(image, sigma=random.random(), mode='reflect', multichannel=True)
 	return image2
+
 def swirl(image):
-	strength = 2
+	strength = random.randint(0,10)
 	radius = random.randint(100,400)
-	image2 = transform.swirl(image, strength=strength, radius=radius)
+	rows, cols, channels = image.shape
+	center = (random.randint(0,rows - 1), random.randint(0, cols - 1))
+	image2 = transform.swirl(image, strength=strength, radius=radius, center=center)
 	return image2
 
 i = 0

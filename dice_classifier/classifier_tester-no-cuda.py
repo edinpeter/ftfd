@@ -34,8 +34,11 @@ testset = DiceDataset("./data/", False, 140, train_percent=0.75)
 model = torch.load('classifier.pt')
 print "Len: ", len(testset)
 
+total = 0
+correct = 0
 start = time.time()
-for i in range(0, 10):
+for i in range(0, 100):
+
     r1 = random.randint(0, len(testset) - 1)
     r2 = random.randint(0, len(testset) - 1)
     r3 = random.randint(0, len(testset) - 1)
@@ -57,11 +60,17 @@ for i in range(0, 10):
     softed = soft(Variable(outputs.data))
     print "\n\n"
     for i in range(0,4):
+        total = total + 1
     	print "Confidence ", softed[i][predicted[i]]
     	print "Prediction: ", predicted[i] + 1
         print "Actual: ", testset[samples[i]][2]
+        if str(predicted[i] + 1)+'_' in testset[samples[i]][2]:
+            correct = correct + 1
     	print "\n\n"
     #end = time.clock()
 
 end = time.time()
 print "Completed in : ", end - start, " seconds"
+print "Net accuracy: %2.2f %%" % (100 * float(correct) / float(total))
+print "Correct samples: ", correct
+print "Total samples: ", total
