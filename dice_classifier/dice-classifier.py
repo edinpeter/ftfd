@@ -4,9 +4,9 @@ import torchvision.transforms as transforms
 from dice_dataset import DiceDataset
 import matplotlib.pyplot as plt
 
-trainset = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", True, 100, train_percent=0.75)
+trainset = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", True, 1000, train_percent=0.75)
 
-testset = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", False, 100, train_percent=0.75)
+testset = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", False, 1000, train_percent=0.75)
 
 print "Train set length: ", len(trainset)
 print "Test set length: ", len(testset)
@@ -54,7 +54,7 @@ import torch.optim as optim
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-for epoch in range(20):  # loop over the dataset multiple times
+for epoch in range(100):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
@@ -128,4 +128,4 @@ for i in range(6):
     print('Accuracy of %5s : %2d %%' % (
         classes[i], 100 * class_correct[i] / class_total[i]))
 
-torch.save(net, 'classifier.pt')
+torch.save(net, 'classifier_cuda.pt')

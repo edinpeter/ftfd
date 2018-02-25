@@ -6,9 +6,11 @@ import torch.nn.functional as F
 import time
 import random
 
+verbose = False
+
 class Net(nn.Module):
     def __init__(self):
-    	self.network_width = 10
+        self.network_width = 10
         self.mystery_1 = 18
         self.mystery_2 = 20
         self.mystery_3 = 20
@@ -29,40 +31,56 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
+data_start = time.time()
+testset = DiceDataset("./data/", False, 20, train_percent=0.75)
+data_end = time.time()
 
-testset = DiceDataset("./dice_small", "/home/peter/Desktop/dice/randoms_small/", train=False, no_dice_max=400, train_percent=0.5)
+model_start = time.time()
+model = torch.load('classifier_cuda.pt')
+model_end = time.time()
 
-model = torch.load('classifier.pt')
-print "Dice: ", testset.len_dice()
-print "No dice: ", testset.len_no_dice()
+print "Len: ", len(testset)
 
+total = 0
+correct = 0
 start = time.time()
-for i in range(0, 1000):
-    r1 = random.randint(0, testset.len_no_dice() + testset.len_dice() + -1)
-    r2 = random.randint(0, testset.len_no_dice() + testset.len_dice() + -1)
-    r3 = random.randint(0, testset.len_no_dice() + testset.len_dice() + -1)
-    r4 = random.randint(0, testset.len_no_dice() + testset.len_dice() + -1)
+for i in range(0, 100):
 
-    print r1, r2, r3, r4, testset.len_no_dice() + testset.len_dice() + 1
+    r1 = random.randint(0, len(testset) - 1)
+    r2 = random.randint(0, len(testset) - 1)
+    r3 = random.randint(0, len(testset) - 1)
+    r4 = random.randint(0, len(testset) - 1)
+    samples = [r1, r2, r3, r4]
+    #print r1, r2, r3, r4, len(testset) - 1
     t = torch.cat((testset[r1][0].unsqueeze(0), testset[r2][0].unsqueeze(0), testset[r3][0].unsqueeze(0), testset[r4][0].unsqueeze(0)), dim=0)
 
     soft = nn.Softmax(1)
     optim = Variable(t.cuda())
     outputs = model(optim)
-    print "Testing..."
+    #print "Testing..."
     _, predicted = torch.max(outputs.data, 1)
-
-    print outputs.data
-    print soft(Variable(outputs.data))
-    print outputs.data[1]
+    if verbose:
+        print outputs.data
+        print soft(Variable(outputs.data))
+        print outputs.data[1]
 
     softed = soft(Variable(outputs.data))
-    print "\n\n"
     for i in range(0,4):
-    	print "Confidence ", softed[i][predicted[i]]
-    	print "Prediction: ", predicted[i]
-    	print "\n\n"
+        total = total + 1
+        if softed.data[i][predicted[i]] > 0.5 and softed.data[i][predicted[i]] < 0.95:
+            print "Confidence ", softed[i][predicted[i]]
+            print "Prediction: ", predicted[i] + 1
+            print "Actual: ", testset[samples[i]][2]
+            print "\n\n"
+
+        if str(predicted[i] + 1)+'_' in testset[samples[i]][2]:
+            correct = correct + 1
     #end = time.clock()
 
 end = time.time()
-print "Completed in : ", end - start
+print "Data loaded in: %2.2f seconds" % (data_end - data_start)
+print "Model loaded in: %2.2f seconds" % (model_end - model_start)
+print "Completed in: %1.5f seconds: " % (end - start)
+print "Net accuracy: %2.2f %%" % (100 * float(correct) / float(total))
+print "Correct samples: ", correct
+print "Total samples: ", total
