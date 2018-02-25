@@ -1,1 +1,2 @@
 *.pyc
+./dice_classifier/data/*

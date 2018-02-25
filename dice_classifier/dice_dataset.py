@@ -38,7 +38,7 @@ class DiceDataset(Dataset):
         return torch.from_numpy(image).float(), label - 1, filename
 
 if __name__ == "__main__":
-    d = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", True, 20)
+    d = DiceDataset("./data/", True, 20)
 
     print "Len set: ", len(d)
     p = DataLoader(d, batch_size=4, num_workers=2, shuffle=True)
