@@ -20,8 +20,6 @@ class DiceImageDataset(Dataset):
                 dice_imgs_temp.append(img)
         self.dice_imgs = dice_imgs_temp
 
-
-
     def __len__(self):
         return len(self.dice_imgs)
 

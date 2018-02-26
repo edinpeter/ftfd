@@ -32,7 +32,7 @@ class Net(nn.Module):
         return x
 
 data_start = time.time()
-testset = DiceDataset("./data/", False, 20, train_percent=0.75)
+testset = DiceDataset("./data/", False, 200, train_percent=0.75)
 data_end = time.time()
 
 model_start = time.time()

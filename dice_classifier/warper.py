@@ -1,9 +1,9 @@
-from skimage import color, transform, io, filters
+from skimage import color, transform, io, filters, util
 import skimage
 import os
 import random
 import numpy as np
-from threading import Thread
+from threading import Thread, Lock
 import time
 
 image_dir = "/home/peter/Desktop/ftfd/dice_classifier/data/"
@@ -14,7 +14,7 @@ SWIRL_STRENGTH_MAX = 10
 SWIRL_RADIUS_MIN = 100
 SWIRL_RADIUS_MAX = 400
 SWIRL_CENTERED = False
-BLUR_ITERATIONS_MAX = 5
+BLUR_ITERATIONS_MAX = 10
 DISTORTION_OPERATION_PROBABILITY = 0.5
 MAX_THREADS = 20
 
@@ -42,10 +42,11 @@ def color1(image):
 
 def blur(image):
 	image2 = image
-	for i in range(random.randint(1,BLUR_ITERATIONS_MAX)):
+	for i in range(random.randint(BLUR_ITERATIONS_MAX,BLUR_ITERATIONS_MAX)):
 		modes = ['reflect', 'constant', 'nearest', 'mirror', 'wrap']
 		mode=modes[random.randint(0, len(modes) - 1)]
-		image2 = filters.gaussian(image, sigma=random.random(), mode=mode, multichannel=True)
+		#random modes make it break =(
+		image2 = filters.gaussian(image, sigma=1.9, mode='constant', preserve_range=False, multichannel=True)
 	return image2
 
 def swirl(image):
@@ -62,29 +63,54 @@ def swirl(image):
 
 	return image2
 
-def distort(image_name, image_dir, results):
+def noise(image):
+	types= ['gaussian','localvar','poisson','s&p','speckle']
+	return util.random_noise(image, mode=types[random.randint(0, len(types) - 1)])
+
+
+def distort(image_name, image_dir, results, in_lock=None, out_lock=None):
+
 	try:
-		image = io.imread(os.path.join(image_dir,image_name))
+		if in_lock:
+			in_lock.acquire()
+			image = io.imread(os.path.join(image_dir,image_name))
+			in_lock.release()
+		else:
+			image = io.imread(os.path.join(image_dir,image_name))
+
 	except:
+		in_lock.release()
+		print "Failed to open ", image_name
 		results.append(True)
 		return
 
-	functions = [blur, swirl, color1]
+	functions = [blur]
 
 	for function in functions:
 		if random.random() > DISTORTION_OPERATION_PROBABILITY:
 			image = function(image)
 	try:
-		io.imsave(os.path.join(image_dir,image_name), skimage.img_as_float(image))
+		if out_lock:
+			out_lock.acquire()
+			io.imsave(os.path.join(image_dir,image_name), skimage.img_as_float(image))
+			out_lock.release()
 		results.append(False)
 	except:
+		out_lock.release()
+		print "Failed to save ", image_name
 		results.append(True)
+
+
 
 i = 0
 fails = 0
 threads_list = list()
 results = list()
 start = time.time()
+
+in_lock = Lock()
+out_lock = Lock()
+
 for img in imgs:
 	if not threads:
 		failure = distort(img, image_dir, results)
@@ -93,7 +119,7 @@ for img in imgs:
 			print i
 	else:
 		if len(threads_list) < MAX_THREADS:
-			t = Thread(target = distort, args=(img, image_dir, results,))
+			t = Thread(target = distort, args=(img, image_dir, results, in_lock, out_lock,))
 			threads_list.append(t)
 			t.start()
 		else:
@@ -103,7 +129,7 @@ for img in imgs:
 					if not t.is_alive():
 						threads_list.remove(t)
 						removed = True
-			t = Thread(target = distort, args=(img, image_dir, results,))
+			t = Thread(target = distort, args=(img, image_dir, results, in_lock, out_lock,))
 			threads_list.append(t)
 			t.start()	
 		i = i + 1
