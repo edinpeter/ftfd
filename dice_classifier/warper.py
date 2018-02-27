@@ -5,21 +5,24 @@ import random
 import numpy as np
 from threading import Thread, Lock
 import time
+import cv2
 
 image_dir = "/home/peter/Desktop/ftfd/dice_classifier/data/"
 imgs = filter((lambda s: '_image' in s) , os.listdir(image_dir))
 threads = True
 
-SWIRL_STRENGTH_MAX = 10
-SWIRL_RADIUS_MIN = 100
+SWIRL_STRENGTH_MAX = 2
+SWIRL_RADIUS_MIN = 200
 SWIRL_RADIUS_MAX = 400
 SWIRL_CENTERED = False
+BLUR_ITERATIONS_MIN = 5
 BLUR_ITERATIONS_MAX = 10
-DISTORTION_OPERATION_PROBABILITY = 0.5
+DISTORTION_OPERATION_PROBABILITY = 0.65
 MAX_THREADS = 20
 
 assert DISTORTION_OPERATION_PROBABILITY >= 0 and DISTORTION_OPERATION_PROBABILITY <= 1 
 assert SWIRL_RADIUS_MAX > SWIRL_RADIUS_MIN
+assert BLUR_ITERATIONS_MAX > BLUR_ITERATIONS_MIN
 
 def color1(image):
 	alpha = random.random()
@@ -42,11 +45,9 @@ def color1(image):
 
 def blur(image):
 	image2 = image
-	for i in range(random.randint(BLUR_ITERATIONS_MAX,BLUR_ITERATIONS_MAX)):
-		modes = ['reflect', 'constant', 'nearest', 'mirror', 'wrap']
-		mode=modes[random.randint(0, len(modes) - 1)]
-		#random modes make it break =(
-		image2 = filters.gaussian(image, sigma=1.9, mode='constant', preserve_range=False, multichannel=True)
+	for i in range(random.randint(BLUR_ITERATIONS_MIN,BLUR_ITERATIONS_MAX)):
+		blur_amount = random.randint(3,15)
+		image2 = cv2.blur(image2, (blur_amount,blur_amount))
 	return image2
 
 def swirl(image):
@@ -72,31 +73,31 @@ def distort(image_name, image_dir, results, in_lock=None, out_lock=None):
 
 	try:
 		if in_lock:
-			in_lock.acquire()
+			#in_lock.acquire()
 			image = io.imread(os.path.join(image_dir,image_name))
-			in_lock.release()
+			#in_lock.release()
 		else:
 			image = io.imread(os.path.join(image_dir,image_name))
 
 	except:
-		in_lock.release()
+		#in_lock.release()
 		print "Failed to open ", image_name
 		results.append(True)
 		return
 
-	functions = [blur]
+	functions = [blur, swirl, noise, color1]
 
 	for function in functions:
 		if random.random() > DISTORTION_OPERATION_PROBABILITY:
 			image = function(image)
 	try:
 		if out_lock:
-			out_lock.acquire()
+			#out_lock.acquire()
 			io.imsave(os.path.join(image_dir,image_name), skimage.img_as_float(image))
-			out_lock.release()
+			#out_lock.release()
 		results.append(False)
 	except:
-		out_lock.release()
+		#out_lock.release()
 		print "Failed to save ", image_name
 		results.append(True)
 

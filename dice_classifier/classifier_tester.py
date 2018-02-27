@@ -32,7 +32,7 @@ class Net(nn.Module):
         return x
 
 data_start = time.time()
-testset = DiceDataset("./data/", False, 200, train_percent=0.75)
+testset = DiceDataset("./data/", False, 800, train_percent=0.75)
 data_end = time.time()
 
 model_start = time.time()
@@ -44,7 +44,7 @@ print "Len: ", len(testset)
 total = 0
 correct = 0
 start = time.time()
-for i in range(0, 100):
+for i in range(0, 200):
 
     r1 = random.randint(0, len(testset) - 1)
     r2 = random.randint(0, len(testset) - 1)
@@ -68,9 +68,9 @@ for i in range(0, 100):
     for i in range(0,4):
         total = total + 1
         if softed.data[i][predicted[i]] > 0.5 and softed.data[i][predicted[i]] < 0.95:
-            print "Confidence ", softed[i][predicted[i]]
-            print "Prediction: ", predicted[i] + 1
-            print "Actual: ", testset[samples[i]][2]
+            print "Confidence %1.4f" % (softed[i][predicted[i]])
+            print "Prediction: %i" % (predicted[i] + 1)
+            print "Actual: %10s" % (testset[samples[i]][2])
             print "\n\n"
 
         if str(predicted[i] + 1)+'_' in testset[samples[i]][2]:
@@ -82,5 +82,5 @@ print "Data loaded in: %2.2f seconds" % (data_end - data_start)
 print "Model loaded in: %2.2f seconds" % (model_end - model_start)
 print "Completed in: %1.5f seconds: " % (end - start)
 print "Net accuracy: %2.2f %%" % (100 * float(correct) / float(total))
-print "Correct samples: ", correct
-print "Total samples: ", total
+print "Correct samples: %i" % (correct)
+print "Total samples: %i" % (total)

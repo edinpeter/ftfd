@@ -4,9 +4,9 @@ import torchvision.transforms as transforms
 from dice_dataset import DiceDataset
 import matplotlib.pyplot as plt
 
-trainset = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", True, 1000, train_percent=0.75)
+trainset = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", True, 1000, train_percent=0.65)
 
-testset = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", False, 1000, train_percent=0.75)
+testset = DiceDataset("/home/peter/Desktop/ftfd/dice_classifier/data/", False, 1000, train_percent=0.65)
 
 print "Train set length: ", len(trainset)
 print "Test set length: ", len(testset)
