@@ -6,42 +6,70 @@ import numpy as np
 from threading import Thread, Lock
 import time
 import cv2
+import warnings
+
+warnings.filterwarnings("ignore")
 
 image_dir = "/home/peter/Desktop/ftfd/dice_classifier/data/"
-imgs = filter((lambda s: '_image' in s) , os.listdir(image_dir))
+imgs = filter((lambda s: '7_image' not in s and '_image' in s) , os.listdir(image_dir))
 threads = True
 
 SWIRL_STRENGTH_MAX = 2
 SWIRL_RADIUS_MIN = 200
 SWIRL_RADIUS_MAX = 400
 SWIRL_CENTERED = False
-BLUR_ITERATIONS_MIN = 5
-BLUR_ITERATIONS_MAX = 10
+BLUR_ITERATIONS_MIN = 0
+BLUR_ITERATIONS_MAX = 5
 DISTORTION_OPERATION_PROBABILITY = 0.65
 MAX_THREADS = 20
+MAX_BRIGHTEN_DARKEN = 100
+MIN_BRIGHTEN_DARKEN = 0
 
 assert DISTORTION_OPERATION_PROBABILITY >= 0 and DISTORTION_OPERATION_PROBABILITY <= 1 
 assert SWIRL_RADIUS_MAX > SWIRL_RADIUS_MIN
 assert BLUR_ITERATIONS_MAX > BLUR_ITERATIONS_MIN
 
-def color1(image):
-	alpha = random.random()
-	img = image
-	rows, cols, channels = img.shape
-	img = color.rgb2grey(img)
-	color_mask = np.zeros((rows, cols, 3))
-	color_mask[0:rows-1, 0:cols-1] = [random.random(), random.random(), random.random()]  # Red block
-	# Construct RGB version of grey-level image
-	img_color = np.dstack((img, img, img))
-	img_hsv = color.rgb2hsv(img_color)
+def darken(values, val):
+	#print values
+	return np.where(values <= 0 + val, 0, values - val)
 
-	color_mask_hsv = color.rgb2hsv(color_mask)
 
-	img_hsv[..., 0] = color_mask_hsv[..., 0]
-	img_hsv[..., 1] = color_mask_hsv[..., 1] * alpha
+def brighten(values, val):
+	return np.where(values <= 255 - val, values + val, 255)
 
-	img_masked = color.hsv2rgb(img_hsv)
-	return img_masked
+
+def brightness(image):
+	#print image
+	#print image.shape
+	hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+	h, s, v = cv2.split(hsv)
+	op = brighten
+	if random.random() > 0.5:
+		op = darken
+	v = op(v, random.randint(MIN_BRIGHTEN_DARKEN, MAX_BRIGHTEN_DARKEN))
+	#print h.shape
+	#print s.shape
+	#print v.shape
+	#print h
+	final_hsv = cv2.merge((h, s, v))
+
+	img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
+	#img = img / 255.0
+	return img
+
+
+def color_(image):
+	if random.random() > 0.2:
+		image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+		h, s, v = cv2.split(image_hsv)
+
+		h = np.where(h != 150, random.randint(80, 120), h)
+		s = np.where(s < 50, random.randint(120, 175), s)
+		v = np.where(v < 50, random.randint(120, 175), v)
+
+		image_hsv = cv2.merge((h,s,v))
+		image = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR)
+	return image
 
 def blur(image):
 	image2 = image
@@ -49,6 +77,10 @@ def blur(image):
 		blur_amount = random.randint(3,15)
 		image2 = cv2.blur(image2, (blur_amount,blur_amount))
 	return image2
+
+def noise(image):
+	types= ['gaussian','localvar','poisson','s&p','speckle']
+	return util.random_noise(image, mode=types[random.randint(0, len(types) - 1)])
 
 def swirl(image):
 	strength = random.randint(0,SWIRL_STRENGTH_MAX)
@@ -64,20 +96,17 @@ def swirl(image):
 
 	return image2
 
-def noise(image):
-	types= ['gaussian','localvar','poisson','s&p','speckle']
-	return util.random_noise(image, mode=types[random.randint(0, len(types) - 1)])
-
-
 def distort(image_name, image_dir, results, in_lock=None, out_lock=None):
 
 	try:
 		if in_lock:
 			#in_lock.acquire()
-			image = io.imread(os.path.join(image_dir,image_name))
+			image = cv2.imread(os.path.join(image_dir,image_name), cv2.IMREAD_UNCHANGED)
+			#print image
+			#print image.shape
 			#in_lock.release()
 		else:
-			image = io.imread(os.path.join(image_dir,image_name))
+			image = cv2.imread(os.path.join(image_dir,image_name), cv2.IMREAD_UNCHANGED)
 
 	except:
 		#in_lock.release()
@@ -85,19 +114,16 @@ def distort(image_name, image_dir, results, in_lock=None, out_lock=None):
 		results.append(True)
 		return
 
-	functions = [blur, swirl, noise, color1]
-
+	functions = [blur, brightness, color_]
+	#functions = [brightness]
 	for function in functions:
-		if random.random() > DISTORTION_OPERATION_PROBABILITY:
-			image = function(image)
+		#print "imname", image_name
+		image = function(image)
 	try:
-		if out_lock:
-			#out_lock.acquire()
-			io.imsave(os.path.join(image_dir,image_name), skimage.img_as_float(image))
-			#out_lock.release()
+		cv2.imwrite(os.path.join(image_dir,image_name), image)
+
 		results.append(False)
 	except:
-		#out_lock.release()
 		print "Failed to save ", image_name
 		results.append(True)
 

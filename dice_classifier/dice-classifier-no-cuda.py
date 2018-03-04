@@ -4,9 +4,9 @@ import torchvision.transforms as transforms
 from dice_dataset import DiceDataset
 import matplotlib.pyplot as plt
 
-trainset = DiceDataset("./data/", True, 300, train_percent=0.75)
+trainset = DiceDataset("./data/", True, 200, train_percent=0.65)
 
-testset = DiceDataset("./data/", False, 300, train_percent=0.75)
+testset = DiceDataset("./data/", False, 200, train_percent=0.65)
 
 print "Train set length: ", len(trainset)
 print "Test set length: ", len(testset)
@@ -54,7 +54,7 @@ import torch.optim as optim
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-for epoch in range(50):  # loop over the dataset multiple times
+for epoch in range(100):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):

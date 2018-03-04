@@ -14,8 +14,8 @@ from dice_image_dataset import DiceImageDataset
 class DiceDataset(Dataset):
     """ Dice Dataset """
 
-    def __init__(self, dice_dir, train, class_max=200, train_percent=0.75, equal_datasets=False, transform=None):       
-        d = list(DiceImageDataset(dice_dir, class_max))
+    def __init__(self, dice_dir, train, classes=6, class_max=200, train_percent=0.75, equal_datasets=False, transform=None):       
+        d = list(DiceImageDataset(dice_dir, classes, class_max))
         random.shuffle(d)
         self.dice_imgs = list()
         if train:
